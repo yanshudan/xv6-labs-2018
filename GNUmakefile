@@ -137,6 +137,7 @@ $(OBJDIR)/.vars.%: FORCE
 # Include Makefrags for subdirectories
 include boot/Makefrag
 include kern/Makefrag
+include play/Makefrag
 
 
 QEMUOPTS = -drive file=$(OBJDIR)/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::$(GDBPORT)
@@ -296,7 +297,7 @@ myapi.key:
 
 #handin-prep:
 #	@./handin-prep
-
+ 
 
 # This magic automatically generates makefile dependencies
 # for header files included from C source files we compile,

@@ -1,0 +1,26 @@
+OBJDIRS += play
+
+# PLAY_OBJS := $(OBJDIR)/play/%.o
+all: $(OBJDIR)/play/trace
+
+$(OBJDIR)/play/trace.o: play/trace.c 
+	@echo + cc  $<
+	@mkdir -p $(@D)
+	$(V)$(CC) -nostdinc $(KERN_CFLAGS)  -c -o $@ $<
+
+$(OBJDIR)/play/trace: $(OBJDIR)/play/trace.o $(OBJDIR)/kern/printf.o $(OBJDIR)/kern/printfmt.o $(OBJDIR)/kern/console.o
+	@echo + ld $@
+	$(V)$(LD) $(LDFLAGS) -o $@.out $^
+
+# $(OBJDIR)/play/main.o: play/main.c
+# 	@echo + cc -Os $<
+# 	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -Os -c -o $(OBJDIR)/play/main.o play/main.c
+
+# $(OBJDIR)/play/play: $(BOOT_OBJS)
+# 	@echo + ld play/play
+# 	$(V)$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $@.out $^
+# 	$(V)$(OBJDUMP) -S $@.out >$@.asm
+# 	$(V)$(OBJCOPY) -S -O binary -j .text $@.out $@
+# 	$(V)perl play/sign.pl $(OBJDIR)/play/play
+
+
