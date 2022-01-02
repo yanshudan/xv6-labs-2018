@@ -1,7 +1,7 @@
 OBJDIRS += play
 
 # PLAY_OBJS := $(OBJDIR)/play/%.o
-all: $(OBJDIR)/play/trace
+# all: $(OBJDIR)/play/trace
 
 $(OBJDIR)/play/trace.o: play/trace.c 
 	@echo + cc  $<
