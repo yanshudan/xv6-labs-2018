@@ -78,6 +78,55 @@ getint(va_list *ap, int lflag)
 
 // Main function to format and print a string.
 void printfmt(void (*putch)(int, void*), void *putdat, const char *fmt, ...);
+static int getpositive(const char **pptr)
+{
+	const char* ptr=*pptr;
+	int ret = 0;
+	char c = *ptr;
+	while (c <= '9' && c >= '0')
+	{
+		ret = ret * 10 + c - '0';
+		c = *++ptr;
+	}
+	if(*ptr++ != 'm') return -1;
+	if(*ptr++ != ';') return -1;
+	*pptr=ptr;
+	return ret;
+}
+int cflags = 0x0700;
+// int fgcolors[]={
+// 	0,1,2,3,4,5,6,7
+// };
+// int bgcolors[]={
+// 	0,1,2,3,4,5,6,7
+// };
+static const char* parsefmt(const char *fmt)
+{
+	// return 0 if fmt doesn't contain a valid escape sequence.
+	if (*fmt != '[')
+		return 0;
+	++fmt;
+
+	int ps = getpositive(&fmt);
+	// handle text attibutes here TODO;
+
+	int fgcolor = getpositive(&fmt);
+	// handle fgcolor here;
+	fgcolor -= 30;
+	if (fgcolor > 7 || fgcolor < 0)
+		return 0;
+	cflags &= 0xF0FF;
+	cflags |= (fgcolor << 8);
+
+	int bgcolor = getpositive(&fmt);
+	// handle bgcolor here;
+	bgcolor -= 40;
+	if (bgcolor > 7 || bgcolor < 0)
+		return 0;
+	cflags &= 0x0FFF;
+	cflags |= (bgcolor << 12);
+	return fmt;
+}
 
 void
 vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
@@ -92,6 +141,11 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		while ((ch = *(unsigned char *) fmt++) != '%') {
 			if (ch == '\0')
 				return;
+			if (ch == 0x1B){
+				const char* ret=parsefmt(fmt);
+				if(ret) fmt=ret;
+				continue;
+			}
 			putch(ch, putdat);
 		}
 

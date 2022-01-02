@@ -58,7 +58,9 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
-	return 0;
+    int x = 1, y = 3, z = 4;
+    cprintf("\033[1m;32m;44m;x %d, y %x, z %d\033[1m;37m;40m;\n", x, y, z);
+    return 0;
 }
 
 
