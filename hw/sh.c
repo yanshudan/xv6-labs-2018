@@ -51,7 +51,9 @@ void runcmd(struct cmd *cmd)
     struct execcmd *ecmd;
     struct pipecmd *pcmd;
     struct redircmd *rcmd;
-
+    char *dirpath=malloc(20);
+    memcpy(dirpath,"/bin/",5);
+    dirpath+=5;
     if (cmd == 0)
         _exit(0);
 
@@ -65,8 +67,12 @@ void runcmd(struct cmd *cmd)
         ecmd = (struct execcmd *)cmd;
         if (ecmd->argv[0] == 0)
             _exit(0);
-        fprintf(stderr, "exec not implemented\n");
+        // fprintf(stderr, "exec not implemented\n");
         // Your code here ...
+        memset(dirpath,0,15);
+        memcpy(dirpath,ecmd->argv[0],strlen(ecmd->argv[0]));
+        if(execv(dirpath-5,ecmd->argv))
+            fprintf(stderr, "execv failed!\n");
         break;
 
     case '>':
@@ -83,6 +89,7 @@ void runcmd(struct cmd *cmd)
         // Your code here ...
         break;
     }
+    free(dirpath-5);
     _exit(0);
 }
 
