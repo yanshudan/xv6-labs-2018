@@ -9,7 +9,11 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/obj/kern/kernel",
-            "args": ["-n","-x",".gdbinit"],
+            "args": [
+                "-n",
+                "-x",
+                ".gdbinit"
+            ],
             "stopAtEntry": true,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -33,6 +37,32 @@
             //     "traceResponse": true
             // },
             "miDebuggerServerAddress": "localhost:26000",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "gcc-9 - Build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: gcc-9 build active file",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
