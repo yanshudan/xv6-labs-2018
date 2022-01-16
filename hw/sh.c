@@ -116,7 +116,6 @@ void runcmd(struct cmd *cmd)
       close(p[1]);
       wait(NULL);
     }
-    // Your code here ...
     break;
   }
   _exit(0);
