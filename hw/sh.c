@@ -65,21 +65,57 @@ void runcmd(struct cmd *cmd)
     ecmd = (struct execcmd *)cmd;
     if (ecmd->argv[0] == 0)
       _exit(0);
-    fprintf(stderr, "exec not implemented\n");
-    // Your code here ...
+    if (fork() == 0)
+    {
+      char *path = malloc(20);
+      memcpy(path, "/bin/", 5);
+      path += 5;
+      memcpy(path, ecmd->argv[0], sizeof(char) * strlen(ecmd->argv[0]));
+      if (execv(path - 5, ecmd->argv))
+        fprintf(stderr, "%s not implemented!\n", ecmd->argv[0]);
+      exit(0);
+    }
+    wait(NULL);
     break;
 
   case '>':
   case '<':
     rcmd = (struct redircmd *)cmd;
-    fprintf(stderr, "redir not implemented\n");
-    // Your code here ...
-    runcmd(rcmd->cmd);
+    if (fork() == 0)
+    {
+      // fd will be copied across fork.
+      // close 1/0 for stdio, open will use the lowest fd number available.
+      // replace stdio with the newly opened file.
+      close(rcmd->fd);
+      open(rcmd->file, rcmd->flags);
+      runcmd(rcmd->cmd);
+      exit(0);
+    }
+    wait(NULL);
     break;
 
   case '|':
     pcmd = (struct pipecmd *)cmd;
-    fprintf(stderr, "pipe not implemented\n");
+    int p[2];
+    pipe(p);
+    if (fork() == 0)
+    {
+      close(p[1]);
+      close(0);
+      dup(p[0]);
+      runcmd(pcmd->right);
+      close(p[0]);
+      exit(0);
+    }
+    else
+    {
+      close(p[0]);
+      close(1);
+      dup(p[1]);
+      runcmd(pcmd->left);
+      close(p[1]);
+      wait(NULL);
+    }
     // Your code here ...
     break;
   }
