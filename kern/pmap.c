@@ -101,8 +101,10 @@ boot_alloc(uint32_t n)
 	// to a multiple of PGSIZE.
 	//
 	// LAB 2: Your code here.
-
-	return NULL;
+	//TODO: panic if no memory but how to see if there is enough memory?
+	result=nextfree;
+	nextfree = ROUNDUP(nextfree + n, PGSIZE);
+	return result;
 }
 
 // Set up a two-level page table:
@@ -123,7 +125,7 @@ void mem_init(void)
 	i386_detect_memory();
 
 	// Remove this line when you're ready to test this function.
-	panic("mem_init: This function is not finished\n");
+	// panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
@@ -146,7 +148,8 @@ void mem_init(void)
 	// array.  'npages' is the number of physical pages in memory.  Use memset
 	// to initialize all fields of each struct PageInfo to 0.
 	// Your code goes here:
-
+	pages=boot_alloc(sizeof(*pages)*npages);
+	memset(pages,0,sizeof(*pages)*npages);
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
 	// up the list of free physical pages. Once we've done so, all further
@@ -156,6 +159,7 @@ void mem_init(void)
 	page_init();
 
 	check_page_free_list(1);
+	panic("mem_init: This function is partially finished\n");
 	check_page_alloc();
 	check_page();
 
@@ -247,13 +251,22 @@ void page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
+	// Virtual memory layout for the kernel:
+	// [0,PGSIZE)                     real-mode IDT and BIOS structures
+	// [PGSIZE,IOPHYSMEM)             free to allocation
+	// [IOPHYSMEM,EXTPHYSMEM)         IO hole
+	// [EXTPHYSMEM,boot_alloc::end)   kernel image(text, bss...)
+	// [end,boot_alloc(0)-KERNBASE)            allocated in mem_init(),the first page is kern_pgdir;other pagees is the page table for the kern aka the variable pages
+	// higher                         free to allocation
+	// so interval [IOPHYSMEM,boot_alloc(0)-KERNBASE] cannot be allocated, modify the pointers there to remove them from freelist
 	size_t i;
-	for (i = 0; i < npages; i++)
+	for (i = 1; i < npages; i++)
 	{
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
 	}
+	pa2page((int)boot_alloc(0)-KERNBASE)->pp_link=pa2page(IOPHYSMEM)-1;
 }
 
 //
