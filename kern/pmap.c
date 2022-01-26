@@ -159,8 +159,8 @@ void mem_init(void)
 	page_init();
 
 	check_page_free_list(1);
-	panic("mem_init: This function is partially finished\n");
 	check_page_alloc();
+	panic("mem_init: This function is partially finished\n");
 	check_page();
 
 	//////////////////////////////////////////////////////////////////////
@@ -256,7 +256,7 @@ void page_init(void)
 	// [PGSIZE,IOPHYSMEM)             free to allocation
 	// [IOPHYSMEM,EXTPHYSMEM)         IO hole
 	// [EXTPHYSMEM,boot_alloc::end)   kernel image(text, bss...)
-	// [end,boot_alloc(0)-KERNBASE)            allocated in mem_init(),the first page is kern_pgdir;other pagees is the page table for the kern aka the variable pages
+	// [end,boot_alloc(0)-KERNBASE)   allocated in mem_init(),the first page is kern_pgdir;other pagees is the page table for the kern aka the variable pages
 	// higher                         free to allocation
 	// so interval [IOPHYSMEM,boot_alloc(0)-KERNBASE] cannot be allocated, modify the pointers there to remove them from freelist
 	size_t i;
@@ -285,7 +285,12 @@ struct PageInfo *
 page_alloc(int alloc_flags)
 {
 	// Fill this function in
-	return 0;
+	if(!page_free_list) return NULL;
+	struct PageInfo* ret=page_free_list;
+	page_free_list=page_free_list->pp_link;
+	ret->pp_link=NULL;
+	memset(page2kva(ret),0,PGSIZE);
+	return ret;
 }
 
 //
@@ -297,6 +302,12 @@ void page_free(struct PageInfo *pp)
 	// Fill this function in
 	// Hint: You may want to panic if pp->pp_ref is nonzero or
 	// pp->pp_link is not NULL.
+	if(pp->pp_ref)
+		panic("Freeing a page still in use!");
+	if(pp->pp_link)
+		panic("Double free execption!");
+	pp->pp_link=page_free_list;
+	page_free_list=pp;
 }
 
 //
