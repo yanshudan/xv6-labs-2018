@@ -470,10 +470,10 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 void page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
-	pte_t** pte_store=NULL;
-	struct PageInfo* pginfo=page_lookup(pgdir,va,pte_store);
+	pte_t* pte_store=NULL;
+	struct PageInfo* pginfo=page_lookup(pgdir,va,&pte_store);
 	if(!pginfo) return;
-	*(*pte_store)=0;
+	*pte_store=0;
 	tlb_invalidate(pgdir,va);
 	page_decref(pginfo);
 }
