@@ -419,11 +419,8 @@ int page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	// Fill this function in
 	pte_t* pte=pgdir_walk(pgdir,va,1);
 	if(!pte) return -E_NO_MEM;
-	if(PTE_ADDR(*pte)==PTE_ADDR(page2pa(pp))) {
-		*pte=PTE_ADDR(page2pa(pp))|perm|PTE_P;
-		return 0;
-	}
 	if(*pte & PTE_P) page_remove(pgdir,va);
+	if(pp->pp_ref==0) page_alloc(0);
 	++pp->pp_ref;
 	*pte=PTE_ADDR(page2pa(pp))|perm|PTE_P;
 	return 0;
