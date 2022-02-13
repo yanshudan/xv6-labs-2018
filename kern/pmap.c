@@ -349,10 +349,9 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	if (!pgdir)
 		panic("pgdir doesn't exist!");
 	pgdir+=PDX(va);
-	pte_t *pte_begin = (pte_t*)*pgdir;
+	pte_t *pte_begin = (pte_t*)KADDR(PTE_ADDR(*pgdir));
 	if (pte_begin){
-		pte_begin+=PTX(va);
-		return pte_begin;
+		return pte_begin+PTX(va);
 	}
 	if (!create)
 		return NULL;
@@ -364,7 +363,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	++pginfo->pp_ref;
 	pte_begin = (pte_t*)page2pa(pginfo);
 	*pgdir = (pde_t)pte_begin;
-	pte_begin=(pte_t*)KADDR((int)pte_begin);
+	pte_begin=(pte_t*)KADDR(PTE_ADDR(*pgdir));
 	return pte_begin+PTX(va);
 }
 
