@@ -172,7 +172,7 @@ void mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-	panic("mem_init: This function is partially finished\n");
+	boot_map_region(kern_pgdir, UPAGES, ROUNDUP(npages * sizeof(struct PageInfo), PGSIZE), PADDR(pages), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -186,6 +186,7 @@ void mem_init(void)
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
 
+	boot_map_region(kern_pgdir,KSTACKTOP-KSTKSIZE,KSTKSIZE,PADDR(bootstack),PTE_W|PTE_U|PTE_P);
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
 	// Ie.  the VA range [KERNBASE, 2^32) should map to
@@ -195,8 +196,10 @@ void mem_init(void)
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
 
+	boot_map_region(kern_pgdir,KERNBASE,(~0)-KERNBASE,0x0,PTE_W|PTE_U|PTE_P);
 	// Check that the initial page directory has been set up correctly.
 	check_kern_pgdir();
+	panic("mem_init: This function is partially finished\n");
 
 	// Switch from the minimal entry page directory to the full kern_pgdir
 	// page table we just created.	Our instruction pointer should be
@@ -386,10 +389,10 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 {
 	// Fill this function in
 	pte_t *pte = NULL;
-	for (int i = 0; i < size / PGSIZE; ++i)
+	for (int offset = 0; offset < size; offset += PGSIZE)
 	{
-		pte = pgdir_walk(pgdir, (void *)(va + i * PGSIZE), 1);
-		*pte = (PTE_ADDR(pa)) | perm | PTE_P;
+		pte = pgdir_walk(pgdir, (void *)(va + offset), 1);
+		*pte = (PTE_ADDR(pa + offset)) | perm | PTE_P;
 	}
 }
 
@@ -687,6 +690,7 @@ check_kern_pgdir(void)
 				assert(pgdir[i] & PTE_W);
 			}
 			else
+				// cprintf("%x,%x\n",i,pgdir[i]);
 				assert(pgdir[i] == 0);
 			break;
 		}
