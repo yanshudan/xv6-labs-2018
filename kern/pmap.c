@@ -161,7 +161,6 @@ void mem_init(void)
 	check_page_free_list(1);
 	check_page_alloc();
 	check_page();
-	panic("mem_init: This function is partially finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// Now we set up virtual memory
@@ -173,6 +172,7 @@ void mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
+	panic("mem_init: This function is partially finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
