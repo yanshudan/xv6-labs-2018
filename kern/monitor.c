@@ -102,14 +102,35 @@ int show_mappings(int argc, char **argv, struct Trapframe *tf)
 		return 0;
 	}
 	uint32_t begin = read_hex(argv[1]) & ~0xFFF;
-	uint32_t end = (read_hex(argv[2])+PGSIZE) & ~0xFFF;
+	uint32_t end = (read_hex(argv[2])) & ~0xFFF;
 
 	cprintf("begin=%x, end=%x\n",(void*)begin,(void*)end);
 	//CR3 contains the physical addr,what if we are in user mode?
 	pde_t *pgdir = (pde_t *)(rcr3()+KERNBASE);
-	
 	cprintf("pgdir=%x\n",pgdir);
-	pte_t *tmp = pgdir_walk(pgdir, (void *)begin, 0);
+	uint32_t left = begin, right = begin;
+	uint32_t ibegin = 0, iend=0;
+	for (uint32_t i = begin; i <= end; i += PGSIZE)
+	{
+		pte_t *tmp = pgdir_walk(pgdir, (void *)i, 0);
+		if (tmp && *tmp)
+		{
+			//found page
+			if((right+PGSIZE)==((*tmp)&~0xFFF)){
+				//continous mapping
+				right+=PGSIZE;
+				iend=i;
+			}else{
+				//concatination
+				cprintf("va[%05x-%05x]->pa[%05x-%05x]\n", (void *)(ibegin>>12), (void *)(iend >> 12), left>>12, right>>12);
+				left=right=(*tmp)&~0xFFF;
+				ibegin=iend=i;
+			}
+		}
+		// overflow
+		if(i==end) break;
+	}
+	cprintf("va[%05x-%05x]->pa[%05x-%05x]\n", (void *)(ibegin>>12), (void *)(iend >> 12), left>>12, right>>12);
 	return 0;
 };
 /***** Kernel monitor command interpreter *****/
