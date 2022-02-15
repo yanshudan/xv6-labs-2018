@@ -1,0 +1,17 @@
+OBJDIRS += play
+
+# PLAY_OBJS := $(OBJDIR)/play/%.o
+# all: $(OBJDIR)/play/trace
+
+$(OBJDIR)/play/trace.o: play/trace.c 
+	@echo + cc  $<
+	@mkdir -p $(@D)
+	$(V)$(CC) -nostdinc $(KERN_CFLAGS)  -c -o $@ $<
+
+$(OBJDIR)/play/trace:$(OBJDIR)/kern/string.o $(OBJDIR)/kern/console.o  $(OBJDIR)/kern/printfmt.o  $(OBJDIR)/kern/printf.o   $(OBJDIR)/play/trace.o 
+	@echo + ld $@
+	$(V)$(LD) -o $@.out $(LDFLAGS)  $(GCC_LIB) $^
+
+
+
+

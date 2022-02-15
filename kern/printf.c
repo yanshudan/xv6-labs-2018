@@ -4,11 +4,13 @@
 #include <inc/types.h>
 #include <inc/stdio.h>
 #include <inc/stdarg.h>
-
+extern int cflags;
 
 static void
 putch(int ch, int *cnt)
 {
+	ch &= 0xFF;
+	ch |= cflags;
 	cputchar(ch);
 	*cnt++;
 }
