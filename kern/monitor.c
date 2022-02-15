@@ -24,7 +24,8 @@ struct Command
 static struct Command commands[] = {
 	{"help", "Display this list of commands", mon_help},
 	{"kerninfo", "Display information about the kernel", mon_kerninfo},
-	{"backtrace", "Show back trace infomation on stack(kern only)", mon_backtrace}
+	{"backtrace", "Show back trace infomation on stack(kern only)", mon_backtrace},
+	{"showmap","Show mappings of virtural memory to physical memory", show_mappings}
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -75,7 +76,42 @@ int mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 	}
 	return 0;
 }
+uint32_t read_hex(char* input){
+	char* pc=input;
+	char c=*pc;
+	uint32_t ret=0;
+	if(c!='0') return ~0;
+	c=*++pc;
+	if(c!='x') return ~0;
+	c=*++pc;
+	while(c!='\0'){
+		ret<<=4;
+		if(c>='0' && c<='9') ret+=c-'0';
+		else if(c>='a' && c<='f') ret+=c-'a'+10;
+		else return ~0;
+		c=*++pc;
+	}
+	return ret;
+}
+extern pte_t *pgdir_walk(pde_t *pgdir, const void *va, int create);
+int show_mappings(int argc, char **argv, struct Trapframe *tf)
+{
+	if (argc > 3)
+	{
+		cprintf("too many args!\n");
+		return 0;
+	}
+	uint32_t begin = read_hex(argv[1]) & ~0xFFF;
+	uint32_t end = (read_hex(argv[2])+PGSIZE) & ~0xFFF;
 
+	cprintf("begin=%x, end=%x\n",(void*)begin,(void*)end);
+	//CR3 contains the physical addr,what if we are in user mode?
+	pde_t *pgdir = (pde_t *)(rcr3()+KERNBASE);
+	
+	cprintf("pgdir=%x\n",pgdir);
+	pte_t *tmp = pgdir_walk(pgdir, (void *)begin, 0);
+	return 0;
+};
 /***** Kernel monitor command interpreter *****/
 
 #define WHITESPACE "\t\r\n "
