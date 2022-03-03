@@ -130,6 +130,7 @@ void mem_init(void)
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
+	boot_alloc(PGSIZE);
 	kern_pgdir = (pde_t *)boot_alloc(PGSIZE);
 	memset(kern_pgdir, 0, PGSIZE);
 
