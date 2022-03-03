@@ -116,7 +116,13 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 3: Your code here.
-
+	env_free_list = envs;
+	envs->env_status = ENV_FREE;
+	for (struct Env *next = envs + NENV - 1; next != envs; --next)
+	{
+		next->env_status = ENV_FREE;
+		(next - 1)->env_link = next;
+	}
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
