@@ -185,6 +185,11 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
+	e->env_pgdir=page2kva(p);
+	++p->pp_ref;
+	boot_map_region(e->env_pgdir, UPAGES, PTSIZE, PADDR(pages), PTE_U | PTE_P);
+	boot_map_region(e->env_pgdir, UENVS, sizeof(*envs) * NENV, PADDR(envs), PTE_U | PTE_P);
+	boot_map_region(e->env_pgdir, KSTACKTOP - KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W | PTE_U | PTE_P);
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -273,6 +278,15 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+	void *begin = ROUNDDOWN(va, PGSIZE);
+	void *end = ROUNDUP(va + len, PGSIZE);
+	for (; begin < end; begin += PGSIZE)
+	{
+		if (!page_lookup(e->env_pgdir, begin, 0))
+		{
+			*pgdir_walk(e->env_pgdir, begin, 1) = page2pa(page_alloc(ALLOC_ZERO)) | PTE_P | PTE_W;
+		}
+	}
 }
 
 //
@@ -329,7 +343,7 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
-
+	
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
@@ -347,6 +361,10 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 3: Your code here.
+	struct Env* env=NULL;
+	env_alloc(&env,0);
+	load_icode(env,binary);
+	env->env_type=type;
 }
 
 //
@@ -464,6 +482,15 @@ env_run(struct Env *e)
 
 	// LAB 3: Your code here.
 
+	if (curenv == NULL)
+		curenv = e;
+	if (curenv->env_status == ENV_RUNNING)
+		curenv->env_status = ENV_RUNNABLE;
+	curenv = e;
+	curenv->env_status = ENV_RUNNING;
+	++curenv->env_runs;
+	lcr3(PADDR(curenv->env_pgdir));
+	env_pop_tf(&curenv->env_tf);
 	panic("env_run not yet implemented");
 }
 
