@@ -59,9 +59,10 @@ _alltraps:
 /*   load GD_KD into %ds and %es */
 	pushl %ds
 	pushl %es
-	movw GD_KD, %ds
-	movw GD_KD, %es
 	pushal
+	movw $(GD_KD), %ax
+	movw %ax, %ds
+	movw %ax, %es
 /*   pushl %esp to pass a pointer to the Trapframe as an argument to trap() */
 	pushl %esp
 /*   call trap (can trap ever return?) */
