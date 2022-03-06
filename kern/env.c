@@ -190,6 +190,7 @@ env_setup_vm(struct Env *e)
 	boot_map_region(e->env_pgdir, UPAGES, PTSIZE, PADDR(pages), PTE_U | PTE_P);
 	boot_map_region(e->env_pgdir, UENVS, sizeof(*envs) * NENV, PADDR(envs), PTE_U | PTE_P);
 	boot_map_region(e->env_pgdir, KSTACKTOP - KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W | PTE_U | PTE_P);
+	boot_map_region(e->env_pgdir, KERNBASE, (~0) - KERNBASE, 0x0, PTE_W | PTE_U | PTE_P);
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -284,7 +285,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 	{
 		if (!page_lookup(e->env_pgdir, begin, 0))
 		{
-			*pgdir_walk(e->env_pgdir, begin, 1) = page2pa(page_alloc(ALLOC_ZERO)) | PTE_P | PTE_W;
+			*pgdir_walk(e->env_pgdir, begin, 1) = page2pa(page_alloc(ALLOC_ZERO)) | PTE_P | PTE_W |PTE_U;
 		}
 	}
 }
@@ -343,11 +344,34 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
-	
+	lcr3(PADDR(e->env_pgdir));
+	struct Elf *image= (struct Elf *)binary;
+	struct Proghdr *ph, *eph;
+
+	// is this a valid ELF?
+	if (image->e_magic != ELF_MAGIC){
+		panic("invalid inline binary!");
+		return;
+	}
+
+	// load each program segment
+	ph = (struct Proghdr *) ((uint8_t *) image + image->e_phoff);
+	eph = ph + image->e_phnum;
+	for (; ph < eph; ph++)
+		if (ph->p_type == ELF_PROG_LOAD)
+		{
+			region_alloc(e, (void *)ph->p_va, ph->p_memsz);
+			memcpy((void*)ph->p_va,binary+ph->p_offset,ph->p_filesz);
+		}
+
+	//manipulate trapframe
+	e->env_tf.tf_eip= image->e_entry;
+
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
+	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
 }
 
 //
