@@ -59,6 +59,8 @@ static const char *trapname(int trapno)
 }
 
 void divide(void);
+void pgfault(void);
+void segfault(void);
 void
 trap_init(void)
 {
@@ -66,6 +68,8 @@ trap_init(void)
 
 	// LAB 3: Your code here.
 	SETGATE(idt[0],1,0x8,&divide,0);
+	SETGATE(idt[13],1,0x8,&pgfault,0);
+	SETGATE(idt[14],1,0x8,&segfault,0);
 	// Per-CPU setup 
 	trap_init_percpu();
 }

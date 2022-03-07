@@ -46,7 +46,9 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-TRAPHANDLER(divide,0)
+TRAPHANDLER_NOEC(divide,0)
+TRAPHANDLER(pgfault,13)
+TRAPHANDLER(segfault,14)
 
 
 /*
